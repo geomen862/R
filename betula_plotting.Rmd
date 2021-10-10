@@ -1,0 +1,236 @@
+---
+title: "Betula Plotting"
+output: html_notebook
+---
+
+#Outliers per category detected using Mahalanobis Distances and a chi-squared distribution approach 
+
+#         T65 T5	var	 MD    chi-sqr p 	
+Young
+	6061		102	80	tail21.004 4.58E-06
+	3009		51	34	CA4	22.9	 1.68E-06
+	1012		4	  4	  CA4	3.9	   4.76E-02
+							
+Old 							
+	3374		89	192	CA4	10.38	0.001
+	
+
+```{r}  
+
+library(ggplot2)
+library(cowplot)
+library(ggpubr)
+
+```
+
+
+```{r}   
+
+#Extract data from Betula population registry project database
+#define dataframes and exclude outliers
+
+df_T5 <- read.csv('T5_final.csv')
+df_T65 <- read.csv('T65_final.csv')
+
+df_T5 <- df_T5[-c(80, 34, 4, 192), ] 
+df_T65 <- df_T65[-c(102, 51, 4 , 89), ]
+
+df_old_T5 <-df_T5[!(df_T5$AgeT5 < 65),]
+df_young_T5 <- df_T5[!(df_T5$AgeT5 >= 65),]
+
+df_old_T65 <-df_T65[!(df_T65$AgeT5 < 65),]
+df_young_T65 <- df_T65[!(df_T65$AgeT5 >= 65),]
+
+#separate data into age groups
+
+df_ws1 <- df_old_T5
+df_ws2 <- df_young_T5
+
+df_ws3 <- df_old_T65
+df_ws4 <- df_young_T65
+
+```
+
+
+```{r}
+#define function to remove zero value from plots
+no_zero <- function(l){
+  lnew <- c()
+  for(i in l){
+    if(i==0){ #zeros stay zero
+      lnew <- c(lnew,"0")
+    } else if (i>1){ #above one stays the same
+      lnew <- c(lnew, as.character(i))
+    } else
+      lnew <- c(lnew, gsub("(?<![0-9])0+", "", i, perl = TRUE))
+  }
+  as.character(lnew)
+}
+
+```
+
+
+```{r}
+
+#plot pearson correlation results for different age groups
+
+sp1 <- ggplot(df_ws1, aes(res_CA4_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.4, 2.4), breaks=c(-2.4,-1.2,  0,  1.2, 2.4)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2)) + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.4 , label.y = -3.6, size = 3.5)
+
+
+
+sp2 <- ggplot(df_ws1, aes(res_DG_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),   legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.5, 2.5), breaks=c(-2.5, -1.25,  0 ,  1.25 ,  2.5)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.5 , label.y = -3.6, size = 3.5)
+
+
+
+
+sp3 <- ggplot(df_ws1, aes(res_CA3_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.5, 2.5), breaks=c(-2.5, -1.25,  0,  1.25,  2.5)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.5 , label.y = -3.6, size = 3.5)
+
+
+sp4 <- ggplot(df_ws1, aes(res_CA1_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-3, 3), breaks=c(-3, -2,  -1,  0, 1, 2,  3)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -3 , label.y = -3.6, size = 3.5)
+
+
+
+sp5 <- ggplot(df_ws1, aes(res_tail_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.6, 2.6), breaks=c(-2.6,-1.3,  0, 1.3, 2.6)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2)) + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.6 , label.y = -3.6, size = 3.5)
+
+
+sp6 <- ggplot(df_ws1, aes(res_subic_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()   + theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0,  1.4 ,2.7)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -3.6, size = 3.5)
+
+
+sp7 <- ggplot(df_ws1, aes(res_fimbria_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria T5", y = "OI T5",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.4, 3.6), breaks=c(-2.4, -1.2, 0, 1.2, 2.4,  3.6)) +  scale_y_continuous( labels = no_zero,limits=c(-4.4, 2.2), breaks=c(-4.4,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.4 , label.y = -3.6, size = 3.5)
+
+sp8 <- ggplot(df_ws2, aes(res_CA4_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7,-1.4,  0, 1.4,  2.7)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -2.6, size = 3.5)
+
+
+sp9 <- ggplot(df_ws2, aes(res_DG_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0, 1.4, 2.7)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -2.6, size = 3.5)
+
+sp10 <- ggplot(df_ws2, aes(res_CA3_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4, 0, 1.4, 2.7)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2)) + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -2.6, size = 3.5)
+
+sp11 <- ggplot(df_ws2, aes(res_CA1_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-3.2, 3.2), breaks=c(-3.2, -1.6,  0.0,  1.6, 3.2)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -3.2, label.y = -2.6, size = 3.5)
+
+sp12 <- ggplot(df_ws2, aes(res_tail_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-3.8, 3.8), breaks=c(-3.8, -1.9, 0, 1.9, 3.8)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -3.8 , label.y = -2.6, size = 3.5)
+
+sp13 <- ggplot(df_ws2, aes(res_subic_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()   + theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2, 3), breaks=c(-2,-1, 0, 1, 2, 3)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2 , label.y = -2.6, size = 3.5)
+
+sp14 <- ggplot(df_ws2, aes(res_fimbria_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria T5", y = "OI T5",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") +  scale_x_continuous( labels = no_zero,limits=c(-2.4, 2.4), breaks=c(-2.4, -1.2,  0, 1.2 , 2.4)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.4 , label.y = -2.6, size = 3.5)
+
+
+
+```
+
+
+```{r}
+
+
+sp15 <- ggplot(df_ws3, aes(res_CA4_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.6), breaks=c(-0.6,-0.3, 0.0, 0.3, 0.6)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 1.9), breaks=c(-3.2,  0, 1.9)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), label.x = -0.6 , label.y = -3, size = 3.5)
+
+sp16 <- ggplot(df_ws3, aes(res_DG_T65,  res_OI_T65))  + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.5, 0.5), breaks=c(-0.5, -0.25, 0.0, 0.25, 0.5)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.5 , label.y = -3, size = 3.5)
+
+sp17 <- ggplot(df_ws3, aes(res_CA3_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.7, 0.7), breaks=c(-0.7, -0.35, 0.0, 0.35, 0.7)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9))+   stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.7 , label.y = -3, size = 3.5)
+
+sp18 <- ggplot(df_ws3, aes(res_CA1_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-1, 0.5), breaks=c(-1, -0.5, 0.0, 0.5)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9))+   stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -1 , label.y = -3, size = 3.5)
+
+sp19 <- ggplot(df_ws3, aes(res_tail_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.8), breaks=c( -0.6,-0.4, -0.2 , 0.0, 0.2, 0.4, 0.6, 0.8)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), label.x = -0.6, label.y = -3, size = 3.5)
+
+sp20 <- ggplot(df_ws3, aes(res_subic_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()   + theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-1.2, 0.6), breaks=c(-1.2, -0.6, 0.0, 0.6)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9)) +   stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), label.x = -1.2 , label.y = -3, size = 3.5)
+
+ps1 <- ggplot(df_T5, aes(res_CA4_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)))+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10) , legend.key.height = unit(0.5, 'cm'), legend.key.width = unit(0.2, 'cm'), legend.title = element_text(size=14), legend.text = element_text(size=12)) + scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0, 1.4 ,2.7)) + scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))
+
+sp21 <- ggplot(df_ws3, aes(res_fimbria_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria change", y = "OI change",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-1.5, 1.5), breaks=c(-1.5, -1,  -0.5, 0,  0.5, 1, 1.5)) +  scale_y_continuous( labels = no_zero,limits=c(-3.4, 1.9), breaks=c(-3.4,  0,1.9)) +   stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -1.5 , label.y = -3, size = 3.5)
+
+sp22 <- ggplot(df_ws4, aes(res_CA4_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.42, 0.4), breaks=c(-0.4,-0.2, 0.0, 0.2, 0.4))  +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp23 <- ggplot(df_ws4, aes(res_DG_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.5, 0.5), breaks=c(-0.5,-0.25, 0.0, 0.25, 0.5))  +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp24 <- ggplot(df_ws4, aes(res_CA3_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.4), breaks=c(-0.6,-0.4,-0.2, 0.0, 0.2, 0.4))  +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp25 <- ggplot(df_ws4, aes(res_CA1_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none")  +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp26 <- ggplot(df_ws4, aes(res_tail_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp27 <- ggplot(df_ws4, aes(res_subic_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()   + theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.6), breaks=c(-0.6,-0.4,-0.2, 0.0, 0.2, 0.4, 0.6)) +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4, 0,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+sp28 <- ggplot(df_ws4, aes(res_fimbria_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria change", y = "OI change",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10),  legend.position = "none") + scale_x_continuous( labels = no_zero,limits=c(-1.4, 1.4), breaks=c(-1.4, -0.7,  0.0,  0.7, 1.4)) +  scale_y_continuous( labels = no_zero,limits=c(-2.4, 2.2), breaks=c(-2.4,  2.2)) +  stat_cor(method = 'pearson', aes(label =paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "', p = ns'")), sep = "~")))
+
+
+
+```
+
+
+```{r}
+
+
+sp29 <- ggplot(df_T5, aes(res_CA4_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10) , legend.key.height = unit(0.5, 'cm'), legend.key.width = unit(0.5, 'cm'), legend.title = element_text(size=14), legend.text = element_text(size=12)) + scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0, 1.4 ,2.7)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) + stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -3.4, size = 3.5)
+
+sp30 <- ggplot(df_T5, aes(res_DG_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG T5", y = "OI T5", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10) )  + scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0, 1.4 ,2.7)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -3.4, size = 3.5)
+
+sp31 <- ggplot(df_T5, aes(res_CA3_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black"  , size=10) )+ scale_x_continuous( labels = no_zero,limits=c(-2.7, 2.7), breaks=c(-2.7, -1.4,  0, 1.4 ,2.7)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.7 , label.y = -3.4, size = 3.5)
+
+sp32 <- ggplot(df_T5, aes(res_CA1_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black" ,  size=10) )+ scale_x_continuous( labels = no_zero,limits=c(-3.2, 3.2), breaks=c(-3.2, -1.6,  0, 1.6 , 3.2)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -3.2 , label.y = -3.4, size = 3.5)
+
+sp33 <- ggplot(df_T5, aes(res_tail_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) + scale_x_continuous( labels = no_zero,limits=c(-4, 4), breaks=c(-4, -2,   0, 2,  4)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -4 , label.y = -3.4, size = 3.5)
+
+sp34 <- ggplot(df_T5, aes(res_subic_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum T5", y = "OI T5",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()   + theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black" ,  size=10) )+ scale_x_continuous( labels = no_zero,limits=c(-2.8, 2.8), breaks=c(-2.8, -1.4, 0, 1.4 ,2.8)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.8 , label.y = -3.4, size = 3.5)
+
+sp35 <- ggplot(df_T5, aes(res_fimbria_T5,  res_OI_T5)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria T5", y = "OI T5",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black" ,  size=10) )+ scale_x_continuous( labels = no_zero,limits=c(-2.4, 3.6), breaks=c(-2.4, -1.2,   0, 1.2 ,2.4, 3.6)) + scale_y_continuous( labels = no_zero,limits=c(-3.8, 2.2), breaks=c(-3.8,  0, 2.2)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -2.4 , label.y = -3.4, size = 3.5)
+
+
+sp36 <- ggplot(df_T65, aes(res_CA4_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2")) + labs(x = "CA4 change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()   +theme(axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2)) + scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.6), breaks=c(-0.6,-0.3, 0.0, 0.3, 0.6)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.6 , label.y = -2.8, size = 3.5)
+
+sp37 <- ggplot(df_T65, aes(res_DG_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "DG change", y = "OI change", colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))+ scale_x_continuous( labels = no_zero,limits=c(-0.6, 0.6), breaks=c(-0.6,-0.3, 0.0, 0.3, 0.6)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.6 , label.y = -2.8, size = 3.5)
+
+sp38 <- ggplot(df_T65, aes(res_CA3_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA3 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))+  scale_x_continuous( labels = no_zero,limits=c(-0.7, 0.7), breaks=c(-0.7,-0.35, 0.0, 0.35, 0.7)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.7 , label.y = -2.8, size = 3.5)
+
+sp39 <- ggplot(df_T65, aes(res_CA1_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "CA1 change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))+ scale_x_continuous( labels = no_zero,limits=c(-1, 1), breaks=c(-1,-0.5, 0.0, 0.5, 1)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -1 , label.y = -2.8, size = 3.5)
+
+sp40 <- ggplot(df_ws5, aes(res_tail_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "tail change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2)) + scale_x_continuous( labels = no_zero,limits=c(-0.8, 0.8), breaks=c(-0.8,-0.4, 0.0, 0.4, 0.8)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -0.8 , label.y = -2.8, size = 3.5)
+
+sp41 <- ggplot(df_ws5, aes(res_subic_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "subiculum change", y = "OI change",  colour = "Age Group") +geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2)) + scale_x_continuous( labels = no_zero,limits=c(-1.2, 0.6), breaks=c(-1.2,-0.6 , 0.0, 0.6)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -1.2 , label.y = -2.8, size = 3.5)
+ 
+sp42 <- ggplot(df_T65, aes(res_fimbria_T65,  res_OI_T65)) + geom_point(aes(colour = factor(age)), cex = 0.85)+ scale_color_manual(breaks = c("old", "young"), values=c("blue", "coral2"))+  labs(x = "fimbria change", y = "OI change",  colour = "Age Group") + geom_smooth(method = "lm") + theme_classic()  +theme( axis.title.x = element_text(color="black", size=14, face = "bold"), axis.title.y = element_text(color="black", size=14, face = "bold"), axis.text.x = element_text(color="black", size=10), axis.text.y = element_text( color="black", size=10)) +  scale_y_continuous( labels = no_zero,limits=c(-3.2, 2.2), breaks=c(-3.2,  0, 2.2))  + scale_x_continuous( labels = no_zero,limits=c(-1.5, 1.5), breaks=c(-1.5,  -0.75, 0.0, 0.75,1.5)) +  stat_cor(method = 'pearson', label.sep = ",", cor.coef.name = c("r"), aes(label = paste(..r.label.., cut(..p.., breaks = c(-Inf, 0.05, Inf), labels = c( "'<.05'", "'ns'")), sep = "~")), label.x = -1.5 , label.y = -2.8, size = 3.5)
+```
+
+
+
+```{r}
+
+#create multiplot figures 
+ ggarrange(sp1, sp2, sp3, sp4, sp5, sp6, sp7, 
+           ncol = 2, nrow = 4) 
+ ggarrange(sp8, sp9, sp10, sp11, sp12, sp13, sp14,  
+           ncol = 2, nrow = 4)
+ ggarrange(sp15, sp16, sp17, sp18, sp19, sp20, sp21,  
+           ncol = 2, nrow = 4)
+ ggarrange(sp22, sp23, sp24, sp25, sp26, sp27, sp28, 
+           ncol = 2, nrow = 4)
+ 
+
+ 
+#create multiplot figures with age category legend 
+ 
+ legend <- get_legend(ps1 +  guides(color = guide_legend(nrow = 1))+ theme(legend.position="bottom"))
+
+ M1 <- plot_grid(sp29 + theme(legend.position="none"), 
+                 sp30 + theme(legend.position="none"), 
+                 sp31 + theme(legend.position="none"), 
+                 sp32 + theme(legend.position="none"),
+                 sp33 + theme(legend.position="none"),
+                 sp34 + theme(legend.position="none"), 
+                 sp35 + theme(legend.position="none"), 
+                 ncol = 2, nrow = 4) 
+ 
+ M1 + draw_grob(legend, x = .26, y = -0.28)
+
+ M2 <- plot_grid(sp36 + theme(legend.position="none"), 
+           sp37 + theme(legend.position="none"), 
+           sp38 + theme(legend.position="none"), 
+           sp39 + theme(legend.position="none"),
+           sp40 + theme(legend.position="none"),
+           sp41 + theme(legend.position="none"), 
+           sp42 + theme(legend.position="none"), 
+           ncol = 2, nrow = 4)
+
+ M2 + draw_grob(legend, x = .26, y = -0.28)
+ 
+```
+
+
